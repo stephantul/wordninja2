@@ -44,7 +44,7 @@ class WordNinja:
     def split(self, string: str) -> List[str]:
         return self.split_with_cost(string)[0]
 
-    def split_with_cost(self, string: str) -> Tuple[List[str], float]:
+    def split_with_cost(self, string: str) -> StringCost:
         found = self.automaton.iter(string.lower())
 
         out = []
@@ -91,14 +91,13 @@ class CrossLingualWordNinja:
             for language, wordlist in zip(languages, wordlists)
         ]
 
-    def get_splits(self, string) -> List[StringCost]:
+    def all_splits_with_cost(self, string) -> List[StringCost]:
         return [ninja.split_with_cost(string) for ninja in self.ninjas]
 
-    def split(self, string: str) -> List[str]:
-        results = self.get_splits(string)
-        best_split, best_cost = results[0]
-        for split, cost in results[1:]:
-            if cost < best_cost:
-                best_split = split
+    def split_all(self, string: str) -> Tuple[List[str], ...]:
+        splits, _ = zip(*self.all_splits_with_cost(string))
+        return splits
 
-        return best_split
+    def split(self, string: str) -> List[str]:
+        splits, costs = zip(*self.all_splits_with_cost(string))
+        return splits[np.argmin(costs)]
