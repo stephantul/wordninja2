@@ -52,8 +52,7 @@ class WordNinja:
         lengths = np.ones(len(string) + 1, dtype=np.int32)
         str_len = len(string)
         for end_pos, (cost, length) in found:
-            # Cost of the current position
-            end_pos = end_pos + 1
+            end_pos += 1
             curr_cost = costs[end_pos]
             new_cost = cost + costs[end_pos - length]
             if new_cost < curr_cost:
