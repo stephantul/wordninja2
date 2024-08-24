@@ -20,7 +20,6 @@ dev = [
     "pytest-coverage",
     "ruff",
 ]
-wordfreq = ["wordfreq"]
 
 [build-system]
 requires = ["setuptools>=64", "setuptools_scm>=8"]
@@ -28,6 +27,9 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 packages = ["wordninja2"]
+
+[tool.setuptools.package-data]
+pretokenizers = ["wordninja2/resources/wordninja_words.txt.gz"]
 
 [tool.ruff]
 exclude = [".venv/"]
