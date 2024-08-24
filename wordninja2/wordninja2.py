@@ -1,3 +1,4 @@
+from collections import Counter
 from math import log
 
 import numpy as np
@@ -29,11 +30,20 @@ class WordNinja:
 
         :param wordlist: list of words. These should be sorted in descending order of frequency.
         """
+        if len(set(wordlist)) != len(wordlist):
+            counts = Counter(wordlist)
+            duplicates = [word for word, count in counts.items() if count > 1]
+            raise ValueError(f"The wordlist contains duplicates: {duplicates}")
+
         costs = np.arange(1, len(wordlist) + 1) * log(len(wordlist))
+
         self.word_cost = dict(zip(wordlist, costs))
         self.max_cost = max(costs) + 1e-3
 
         self.automaton = AhoCorasick(wordlist)
+        # Use any because then we can short-circuit the evaluation.
+        # Looks dumb, but it's not.
+        self.should_lowercase = not any(not word.islower() for word in wordlist)
 
     def split(self, string: str) -> list[str]:
         """
@@ -59,8 +69,11 @@ class WordNinja:
         # This is again the worst case scenario: every character is a word.
         backpointers = np.ones(len(string) + 1, dtype=np.int32)
 
+        if self.should_lowercase:
+            string = string.lower()
+
         # We iterate over all matches in the string.
-        for _, start_pos, end_pos in self.automaton.find_matches_as_indexes(string.lower(), overlapping=True):
+        for _, start_pos, end_pos in self.automaton.find_matches_as_indexes(string, overlapping=True):
             # Find the word in the string.
             form = string[start_pos:end_pos]
             # Determine the cost of the word.
