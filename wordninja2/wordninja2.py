@@ -1,102 +1,139 @@
-from typing import List, Union, Dict, Optional, Tuple
 from math import log
 
 import numpy as np
-from ahocorasick import Automaton
-from wordfreq import available_languages, get_frequency_dict
+from ahocorasick_rs import AhoCorasick
 
-WordList = Union[List[str], Dict[str, float]]
-StringCost = Tuple[List[str], float]
+from wordninja2.dataclasses import Segmentation
 
 
 class WordNinja:
-    def __init__(self, language: str, wordlist: Optional[List[str]] = None) -> None:
-        self.language = language.lower()
-        if wordlist is None and self.language not in available_languages():
-            raise ValueError(
-                f"'{self.language}' is not available. Available languages are: {' '.join(set(available_languages()))}"
-            )
+    """
+    WordNinja is a class that can be used to split a string of words into a list of words.
 
-        self.words, self.costs = self._get_words_and_cost(self.language, wordlist)
-        self.max_cost = max(self.costs) + 1e-3
+    The WordNinja class uses a dynamic programming algorithm to infer the location of spaces in a string without spaces.
 
-        self.automaton = self._make_automaton()
+    Attributes
+    ----------
+    word_cost : dict[str, float]
+        A dictionary that maps words to their costs.
+    max_cost : float
+        The maximum cost.
+    automaton : AhoCorasick
+        An Aho-Corasick automaton that is used to find matches in the wordlist.
 
-    def _make_automaton(self) -> Automaton:
-        automaton = Automaton()
-        for index, word in enumerate(self.words):
-            automaton.add_word(word, (self.costs[index], len(word)))
-        automaton.make_automaton()
+    """
 
-        return automaton
+    def __init__(self, wordlist: list[str]) -> None:
+        """
+        Initialize a new WordNinja object.
 
-    def _get_words_and_cost(
-        self, language: str, wordlist: Optional[List[str]]
-    ) -> Tuple[List[str], np.ndarray]:
-        if wordlist:
-            words = wordlist
-        else:
-            words = list(get_frequency_dict(language))
-        costs = np.log(np.arange(1, len(words) + 1) * log(len(words)))
+        :param wordlist: list of words. These should be sorted in descending order of frequency.
+        """
+        costs = np.arange(1, len(wordlist) + 1) * log(len(wordlist))
+        self.word_cost = dict(zip(wordlist, costs))
+        self.max_cost = max(costs) + 1e-3
 
-        return words, costs
+        self.automaton = AhoCorasick(wordlist)
 
-    def split(self, string: str) -> List[str]:
-        return self.split_with_cost(string)[0]
+    def split(self, string: str) -> list[str]:
+        """
+        Split a string into a list of words.
 
-    def split_with_cost(self, string: str) -> StringCost:
-        found = self.automaton.iter(string.lower())
+        :param string: The string to split.
+        :return: A list of words. Not all words may be in the wordlist.
+        """
+        return self.split_with_cost(string).tokens
 
+    def split_with_cost(self, string: str) -> Segmentation:
+        """
+        Split a string into a list of words and return the cost of the segmentation.
+
+        :param string: The string to split.
+        :return: A Segmentation object containing the list of words and the cost of the segmentation.
+        """
         out = []
+        # The cost is initialized to the worst possible scenario.
+        # Each character is a word that is not in the wordlist.
         costs = np.arange(len(string) + 1) * self.max_cost
-        lengths = np.ones(len(string) + 1, dtype=np.int32)
-        str_len = len(string)
-        for end_pos, (cost, length) in found:
-            end_pos += 1
+        # All backpointers are initialized to 1.
+        # This is again the worst case scenario: every character is a word.
+        backpointers = np.ones(len(string) + 1, dtype=np.int32)
+
+        # We iterate over all matches in the string.
+        for _, start_pos, end_pos in self.automaton.find_matches_as_indexes(string.lower(), overlapping=True):
+            # Find the word in the string.
+            form = string[start_pos:end_pos]
+            # Determine the cost of the word.
+            cost = self.word_cost[form]
+            # Find the length of the word.
+            jump = end_pos - start_pos
+
+            # The current cost of the end position.
             curr_cost = costs[end_pos]
-            new_cost = cost + costs[end_pos - length]
+            # The new cost of the end position.
+            new_cost = cost + costs[start_pos]
+            # If the new cost of the end position is lower than
+            # a previously calculated cost, we update the cost.
             if new_cost < curr_cost:
-                lengths[end_pos] = length
+                # Update the backpointer.
+                backpointers[end_pos] = jump
                 costs[end_pos] = new_cost
 
-        i = str_len
+        i = len(string)
         while i > 0:
-            length = lengths[i]
-            out.append(string[i - length : i])
-            i -= length
+            jump = backpointers[i]
+            new_i = i - jump
+            out.append(string[new_i:i])
+            i = new_i
 
-        return list(reversed(out)), costs[-1]
+        # We now have all words in reverse order.
+        tokens = list(reversed(out))
+
+        return Segmentation(tokens=tokens, score=costs[-1])
 
 
-class CrossLingualWordNinja:
-    def __init__(
-        self,
-        languages: List[str],
-        wordlists: Optional[List[Optional[List[str]]]] = None,
-    ) -> None:
-        self.languages = languages
+class MultiWordNinja:
+    """
+    MultiWordNinja is a class that can be used to split a string of words into a list of words using multiple wordlists.
 
-        if wordlists is None:
-            wordlists = [None] * len(languages)
-        self.wordlists = wordlists
+    It splits the string using all wordlists, and keeps the one with the lowest score.
 
-        if len(self.languages) != len(self.wordlists):
-            raise ValueError(
-                f"Your list of languages was not the length of your list of wordlists: {len(self.languages)} vs {len(self.wordlists)}"
-            )
+    Attributes
+    ----------
+    word_ninjas : list[WordNinja]
+        A list of WordNinja objects.
 
-        self.ninjas: List[WordNinja] = [
-            WordNinja(language, wordlist)
-            for language, wordlist in zip(languages, wordlists)
-        ]
+    """
 
-    def all_splits_with_cost(self, string) -> List[StringCost]:
-        return [ninja.split_with_cost(string) for ninja in self.ninjas]
+    def __init__(self, wordlists: list[list[str]]) -> None:
+        """
+        Initialize a new MultiWordNinja object.
 
-    def split_all(self, string: str) -> Tuple[List[str], ...]:
-        splits, _ = zip(*self.all_splits_with_cost(string))
-        return splits
+        :param wordlists: A list of lists of words. Each list should be sorted in descending order of frequency.
+        """
+        self.word_ninjas = [WordNinja(wordlist) for wordlist in wordlists]
 
-    def split(self, string: str) -> List[str]:
-        splits, costs = zip(*self.all_splits_with_cost(string))
-        return splits[np.argmin(costs)]
+    def split(self, string: str) -> list[str]:
+        """
+        Split a string into a list of words.
+
+        :param string: The string to split.
+        :return: A list of words. Not all words may be in the wordlists.
+        """
+        return self.split_with_cost(string).tokens
+
+    def split_with_cost(self, string: str) -> Segmentation:
+        """
+        Split a string into a list of words and return the cost of the segmentation.
+
+        :param string: The string to split.
+        :return: A Segmentation object containing the list of words and the cost of the segmentation.
+        """
+        best_segmentation = self.word_ninjas[0].split_with_cost(string)
+
+        for word_ninja in self.word_ninjas[1:]:
+            new_segmentation = word_ninja.split_with_cost(string)
+            if new_segmentation.score < best_segmentation.score:
+                best_segmentation = new_segmentation
+
+        return best_segmentation
