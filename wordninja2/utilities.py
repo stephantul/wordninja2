@@ -1,3 +1,4 @@
+from functools import lru_cache
 from gzip import open as gzip_open
 from pathlib import Path
 
@@ -18,6 +19,7 @@ def _get_default_wordlist() -> list[str]:
         return f.read().decode().splitlines()
 
 
+@lru_cache()
 def get_default_wordninja() -> WordNinja:
     """
     Get the default WordNinja object.

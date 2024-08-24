@@ -1,5 +1,4 @@
 from collections import Counter
-from math import log
 
 import numpy as np
 from ahocorasick_rs import AhoCorasick
@@ -35,7 +34,7 @@ class WordNinja:
             duplicates = [word for word, count in counts.items() if count > 1]
             raise ValueError(f"The wordlist contains duplicates: {duplicates}")
 
-        costs = np.arange(1, len(wordlist) + 1) * log(len(wordlist))
+        costs = np.log(np.arange(1, len(wordlist) + 1) * np.log(len(wordlist)))
 
         self.word_cost = dict(zip(wordlist, costs))
         self.max_cost = max(costs) + 1e-3
@@ -43,7 +42,7 @@ class WordNinja:
         self.automaton = AhoCorasick(wordlist)
         # Use any because then we can short-circuit the evaluation.
         # Looks dumb, but it's not.
-        self.should_lowercase = not any(not word.islower() for word in wordlist)
+        self.should_lowercase = not any(not word == word.lower() for word in wordlist)
 
     def split(self, string: str) -> list[str]:
         """
