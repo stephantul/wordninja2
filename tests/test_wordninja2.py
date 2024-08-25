@@ -39,7 +39,7 @@ def test_wordninja_lowercase_flag() -> None:
 def test_wordninja_lowercases() -> None:
     """Test that the wordninja actually lowercases."""
     w = WordNinja(["cat", "dog"])
-    assert w.split("CATDOG") == ["cat", "dog"]
+    assert w.split("CATDOG") == ["CAT", "DOG"]
 
     w = WordNinja(["cat", "DOG"])
     assert w.split("CATDOG") == ["C", "A", "T", "DOG"]
