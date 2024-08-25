@@ -128,6 +128,6 @@ MIT
 
 # Author
 
-Stéphan Tulkens
-The original code is by [keredson](https://github.com/keredson)
-The original algorithm was written by [Generic Human](https://stackoverflow.com/users/1515832/generic-human)
+* Stéphan Tulkens
+* The original code is by [keredson](https://github.com/keredson)
+* The original algorithm was written by [Generic Human](https://stackoverflow.com/users/1515832/generic-human)
