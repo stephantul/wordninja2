@@ -28,7 +28,10 @@ class WordNinja:
         Initialize a new WordNinja object.
 
         :param wordlist: list of words. These should be sorted in descending order of frequency.
+        :raises ValueError: If the wordlist is empty or contains duplicates.
         """
+        if not wordlist:
+            raise ValueError("The wordlist is empty.")
         if len(set(wordlist)) != len(wordlist):
             counts = Counter(wordlist)
             duplicates = [word for word, count in counts.items() if count > 1]
@@ -103,50 +106,3 @@ class WordNinja:
         tokens = list(reversed(out))
 
         return Segmentation(tokens=tokens, score=costs[-1])
-
-
-class MultiWordNinja:
-    """
-    MultiWordNinja is a class that can be used to split a string of words into a list of words using multiple wordlists.
-
-    It splits the string using all wordlists, and keeps the one with the lowest score.
-
-    Attributes
-    ----------
-    word_ninjas : list[WordNinja]
-        A list of WordNinja objects.
-
-    """
-
-    def __init__(self, wordlists: list[list[str]]) -> None:
-        """
-        Initialize a new MultiWordNinja object.
-
-        :param wordlists: A list of lists of words. Each list should be sorted in descending order of frequency.
-        """
-        self.word_ninjas = [WordNinja(wordlist) for wordlist in wordlists]
-
-    def split(self, string: str) -> list[str]:
-        """
-        Split a string into a list of words.
-
-        :param string: The string to split.
-        :return: A list of words. Not all words may be in the wordlists.
-        """
-        return self.split_with_cost(string).tokens
-
-    def split_with_cost(self, string: str) -> Segmentation:
-        """
-        Split a string into a list of words and return the cost of the segmentation.
-
-        :param string: The string to split.
-        :return: A Segmentation object containing the list of words and the cost of the segmentation.
-        """
-        best_segmentation = self.word_ninjas[0].split_with_cost(string)
-
-        for word_ninja in self.word_ninjas[1:]:
-            new_segmentation = word_ninja.split_with_cost(string)
-            if new_segmentation.score < best_segmentation.score:
-                best_segmentation = new_segmentation
-
-        return best_segmentation

@@ -12,6 +12,10 @@ repos:
         description: Makes sure files end in a newline and only a newline.
       - id: check-case-conflict
         description: Check for files with names that would conflict on case-insensitive filesystems like MacOS/Windows.
+  - repo: https://github.com/jsh9/pydoclint
+    rev: 0.5.3
+    hooks:
+      - id: pydoclint
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.4.10
     hooks:

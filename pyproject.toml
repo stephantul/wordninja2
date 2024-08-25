@@ -63,3 +63,11 @@ ignore = [
 python_version = "3.10"
 warn_unused_configs = true
 ignore_missing_imports = true
+
+[tool.pydoclint]
+style = "sphinx"
+exclude = "test_"
+allow-init-docstring = true
+arg-type-hints-in-docstring = false
+check-return-types = false
+require-return-section-when-returning-nothing = false

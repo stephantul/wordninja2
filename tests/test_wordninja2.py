@@ -1,6 +1,6 @@
 import pytest
 
-from wordninja2.wordninja2 import MultiWordNinja, WordNinja
+from wordninja2.wordninja2 import WordNinja
 
 
 def test_wordninja() -> None:
@@ -43,18 +43,3 @@ def test_wordninja_lowercases() -> None:
 
     w = WordNinja(["cat", "DOG"])
     assert w.split("CATDOG") == ["C", "A", "T", "DOG"]
-
-
-def test_multiwordninja() -> None:
-    """Test that words are split correctly."""
-    words = ["cat", "dog"]
-
-    w = MultiWordNinja([words])
-
-    w2 = WordNinja(words)
-    assert w.split("catdog") == w2.split("catdog")
-
-    more_words = [["cat", "DOG"], ["CAT", "DOG"]]
-
-    w = MultiWordNinja(more_words)
-    assert w.split("CATDOG") == w.word_ninjas[1].split("CATDOG")

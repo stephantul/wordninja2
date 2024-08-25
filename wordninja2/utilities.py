@@ -27,3 +27,13 @@ def get_default_wordninja() -> WordNinja:
     :return: A WordNinja object.
     """
     return WordNinja(_get_default_wordlist())
+
+
+def split(string: str) -> list[str]:
+    """
+    Split a string into a list of words using the default wordlist.
+
+    :param string: The string to split.
+    :return: A list of words.
+    """
+    return get_default_wordninja().split(string)
