@@ -15,7 +15,7 @@ Wordninja was originally defined in [a stackoverflow thread](https://stackoverfl
 
 As the original wordninja isn't really maintained, and contains some inconsistencies, I decided to rewrite it. See below for a comparison between wordninja and wordninja2.
 
-# Usage
+## Usage
 
 wordninja2 is packaged with a wordlist, which allows you to use it out of the box. To facilitate migrating from wordninja to wordninja2, we use the exact same wordlist.
 
@@ -69,11 +69,71 @@ Note that any wordlist you supply should be in descending order of importance. T
 
 ```
 
-# Differences with wordninja
+### Wordfreq integration
+
+If you want multilingual wordlists, or a better English wordlist, you can download [wordfreq](https://pypi.org/project/wordfreq/), by the great [rspeer](https://github.com/rspeer) (go give it a star on [Github](https://github.com/rspeer/wordfreq)). This works as follows:
+
+```python
+>>> from wordfreq import top_n_list
+>>> from wordninja2 import WordNinja
+>>> wordlist = top_n_list("de", 500_000)
+>>> print(wordlist[:10])
+['die', 'der', 'und', 'in', 'das', 'ich', 'ist', 'nicht', 'zu', 'den']
+
+>>> wn = WordNinja(wordlist)
+>>> wn.split("erinteressiertsichfüralles,aberbesondersfürschmetterlingeundandereinsekten")
+['er',
+ 'interessiert',
+ 'sich',
+ 'für',
+ 'alles',
+ ',',
+ 'aber',
+ 'besonders',
+ 'für',
+ 'schmetterlinge',
+ 'und',
+ 'andere',
+ 'insekten']
+
+```
+
+One interesting avenue is that you could segment strings using different languages, and take the best one.
+
+```python
+>>> from wordfreq import top_n_list
+>>> from wordninja2 import WordNinja
+>>> wns = {}
+>>> for language in ["de", "nl", "en", "fr"]:
+        wordlist = top_n_list(language, 500_000)
+        wns[language] = WordNinja(wordlist)
+
+>>> # This is a dutch string.
+>>> string = "ditiseennederlandsetekstmeteenheelmooiverhaalofmeerdereverhalen"
+>>> segmentations = {}
+>>> for language, model in wns.items():
+        segmentation = model.split_with_cost(string)
+        segmentations[language] = segmentation
+
+>>> for language, segmentation in sorted(segmentations.items(), key=lambda x: x[1].cost):
+        print(language)
+        print(segmentation.tokens)
+nl
+['dit', 'is', 'een', 'nederlandse', 'tekst', 'meteen', 'heel', 'mooi', 'verhaal', 'of', 'meerdere', 'verhalen']
+en
+['diti', 'seen', 'nederlandse', 'tekst', 'me', 'teen', 'heel', 'moo', 'iver', 'haal', 'of', 'meer', 'der', 'ever', 'halen']
+fr
+['dit', 'ise', 'en', 'nederlandse', 'tekst', 'me', 'te', 'en', 'heel', 'mooi', 'verh', 'aal', 'of', 'meer', 'de', 'rever', 'halen']
+de
+['dit', 'i', 'seen', 'nederlandse', 'tekst', 'me', 'teen', 'heel', 'mooi', 'verha', 'al', 'of', 'meer', 'der', 'ever', 'halen']
+
+```
+
+## Differences with wordninja
 
 In this section I'll highlight some differences between `wordninja` and `wordninja2`.
 
-## Consistency
+### Consistency
 
 The original `wordninja` is not self-consistent, that is, the following assert fails.
 
@@ -87,7 +147,7 @@ This is because `wordninja` removes all non-word characters from the string befo
 
 `wordninja2` is completely self-consistent, and does not remove any special characters from a string.
 
-## Speed
+### Speed
 
 `wordninja2` is twice as fast than `wordninja`. Segmenting the entire text of Mary Shelley's Frankenstein (which you can download [here](https://www.gutenberg.org/ebooks/84)):
 
@@ -97,7 +157,7 @@ This is because `wordninja` removes all non-word characters from the string befo
 >>> from wordninja2 import split
 >>> from wordninja import split as old_split
 
-# Remove all spaces.
+>>> # Remove all spaces.
 >>> txt = re.sub(r"\s", "", open("pg84.txt").read())
 >>> %timeit split(txt)
 299 ms ± 4.32 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)
@@ -110,23 +170,23 @@ The original wordninja has an algorithm that backtracks up to the length of the 
 
 To avoid backtracking, `wordninja2` uses the [aho-corasick algorithm](https://en.wikipedia.org/wiki/Aho%E2%80%93Corasick_algorithm). We use a fast implementation in Rust: [aho-corasick](https://github.com/BurntSushi/aho-corasick), with python bindings: [aho-corasick-rs](https://github.com/G-Research/ahocorasick_rs/).
 
-# Dependencies
+## Dependencies
 
 See the [pyproject.toml](pyproject.toml) file. We only rely on the aforementioned aho-corasick implementation and numpy.
 
-# Installation
+## Installation
 
 Clone the repo and run `make install`. I might put this on `pypi` later.
 
-# Tests
+## Tests
 
 `wordninja2` has 100% test coverage, run `make test` to run the tests.
 
-# License
+## License
 
 MIT
 
-# Author
+## Authors
 
 * Stéphan Tulkens
 * The original code is by [keredson](https://github.com/keredson)

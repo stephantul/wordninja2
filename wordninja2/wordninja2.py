@@ -105,4 +105,4 @@ class WordNinja:
         # We now have all words in reverse order.
         tokens = list(reversed(out))
 
-        return Segmentation(tokens=tokens, score=costs[-1])
+        return Segmentation(tokens=tokens, cost=costs[-1])
