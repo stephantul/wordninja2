@@ -71,7 +71,7 @@ Note that any wordlist you supply should be in descending order of importance. T
 
 # Differences with wordninja
 
-In this section I'll highlight some differences.
+In this section I'll highlight some differences between `wordninja` and `wordninja2`.
 
 ## Consistency
 
@@ -116,7 +116,7 @@ See the [pyproject.toml](pyproject.toml) file. We only rely on the aforementione
 
 # Installation
 
-Clone the repo and run `make install`.
+Clone the repo and run `make install`. I might put this on `pypi` later.
 
 # Tests
 
@@ -130,4 +130,4 @@ MIT
 
 Stéphan Tulkens
 The original code is by [keredson](https://github.com/keredson)
-The
+The original algorithm was written by [Generic Human](https://stackoverflow.com/users/1515832/generic-human)
