@@ -68,6 +68,7 @@ class WordNinja:
         # This is again the worst case scenario: every character is a word.
         backpointers = np.ones(len(string) + 1, dtype=np.int32)
 
+        original_string = string
         if self.should_lowercase:
             string = string.lower()
 
@@ -95,7 +96,7 @@ class WordNinja:
         while i > 0:
             jump = backpointers[i]
             new_i = i - jump
-            out.append(string[new_i:i])
+            out.append(original_string[new_i:i])
             i = new_i
 
         # We now have all words in reverse order.
