@@ -1,0 +1,73 @@
+[project]
+name = "wordninja2"
+description = "Split strings into words."
+readme = "README.md"
+version = "0.1.0"
+requires-python = ">= 3.10"
+
+dependencies = [
+    "numpy",
+    "ahocorasick-rs"
+]
+
+[project.optional-dependencies]
+dev = [
+    "black",
+    "ipython",
+    "mypy",
+    "pre-commit",
+    "pytest",
+    "pytest-coverage",
+    "ruff",
+]
+
+[build-system]
+requires = ["setuptools>=64", "setuptools_scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["wordninja2"]
+
+[tool.setuptools.package-data]
+pretokenizers = ["wordninja2/resources/wordninja_words.txt.gz"]
+
+[tool.ruff]
+exclude = [".venv/"]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    # Annotations: Enforce type annotations
+    "ANN",
+    # Complexity: Enforce a maximum cyclomatic complexity
+    "C90",
+    # Remove unused imports
+    "F401",
+    # Isort: Enforce import order
+    "I",
+    # Numpy: Enforce numpy style
+    "NPY",
+    # Print: Forbid print statements
+    "T20",
+]
+
+ignore = [
+    # Allow self and cls to be untyped, and allow Any type
+    "ANN101", "ANN102", "ANN401",
+    # Pydocstyle ignores
+    "D100", "D101", "D104", "D203", "D204", "D212", "D401",
+]
+
+[tool.mypy]
+python_version = "3.10"
+warn_unused_configs = true
+ignore_missing_imports = true
+
+[tool.pydoclint]
+style = "sphinx"
+exclude = "test_"
+allow-init-docstring = true
+arg-type-hints-in-docstring = false
+check-return-types = false
+require-return-section-when-returning-nothing = false
